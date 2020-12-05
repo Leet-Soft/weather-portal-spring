@@ -185,6 +185,23 @@
 <script>
 
     $(document).ready(function(){
+    	
+    	function getAllComments(){
+    		$.ajax({
+    			url: "/comment/all",
+    			method : "GET",
+    			success : function(data){
+    				data.forEach( function (comment){
+    					postComment(comment.city, comment.comment, comment.temp,
+    							comment.icon, comment.id);
+    				});    				
+    				
+    			},fail : function (){
+    				alert("Comments could not be loaded!");
+    			}
+    		
+    		});    		
+    	} 	    	   	
         
         var apiKey = "4ddc620cf659bfe28db6d4012c9fc208";
         var city = "Plovdiv";
@@ -204,8 +221,8 @@
                         displayWeatherInformation(data);
                     break;
 
-                    case "comment":
-                        postComment(data);
+                    case "comment":                    	
+                        addComment(data);
                     break;
 
                     case "select":
@@ -231,21 +248,57 @@
             doApiRequest($(this).val() ,"select")
         });
 
-        function postComment(data){
+        
+        function addComment(data){
+        	
+        	tempToSend = data.main.temp;
+        	commentToSend = $('#comment').val();
+        	cityToSend = $('#select-city').val();
+        	imageToSend = data.weather[0].id.toString();
+        	
+        	
+        	$.ajax({
+        		url: "/comment/add",
+        		method: "POST",
+        		data : {
+        			comment : commentToSend,
+        			city : cityToSend,
+        			temp : tempToSend,
+        			image : imageToSend
+        		},
+        		success : function(response){
+        			
+        			if(response.includes("Error:")){
+        				alert(response);
+        			}else{
+        				postComment(cityToSend,$('#comment').val(), data.main.temp,
+        						data.weather[0].id.toString(), response);     				       				
+         			}      			
+        			
+        		},
+        		fail : function(){
+        			alert("Something went terribly wrong!!!");
+        		}
+        		
+        	})
+        	
+        }
+        
+        function postComment(city, comment, temp, icon, id){
                 var miniMe = $('#cloneMe').clone();
 
-                miniMe.find('h4').text(cityName);
-                miniMe.find('p').text($('#comment').val());
+                miniMe.find('h4').text(city);
+                miniMe.find('p').text(comment);
                 miniMe.attr('id', '');
-                miniMe.find('.current-temp').text(data.main.temp);
+                miniMe.find('.current-temp').text(temp);
                 
                 miniMe.find('button').click(function(){
-                    miniMe.remove();
+                    deleteComment(miniMe, id);
                 });
 
                 iconToChange = miniMe.find('img');
 
-                setWeatherIcon(data.weather[0].id.toString(), iconToChange);
+                setWeatherIcon(icon, iconToChange);
 
 
 
@@ -254,6 +307,33 @@
                 $('#comment').val("");
                 
                 miniMe.show();
+        }
+        
+        function deleteComment(comment, id){
+        	$.ajax({
+        		url: "/comment/delete",
+        		method : "DELETE",
+        		data : { id : id},
+        		complete : function(data){
+        			
+        			switch(data.status){
+        			case 200:
+        				comment.remove();
+        				break;
+        				
+        			case 401:
+        				
+        				window.location.href = "index.html";        				
+        				break;
+        				
+        			case 404:
+        				alert("You have to realise there is no comment!");
+        				break;        				
+        			}
+        			
+        			
+        		}
+        	});
         }
 
 
@@ -298,7 +378,7 @@
         }
 
         doApiRequest("plovdiv","main");
-
+        getAllComments();
     });
 
     

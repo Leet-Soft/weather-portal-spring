@@ -1,5 +1,7 @@
 package uni.fmi.masters.bean;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -12,7 +14,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "comment")
-public class CommentBean {
+public class CommentBean implements Serializable {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +32,7 @@ public class CommentBean {
 	@Column(name = "icon" , length = 256, nullable = true)
 	private String icon;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "user_id")
 	private UserBean user;
 

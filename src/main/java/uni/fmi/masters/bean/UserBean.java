@@ -12,11 +12,15 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
 
 @Entity
 @Table(name = "user")
+@JsonIgnoreProperties({"comments"})
 public class UserBean {
 	
 	@Id
