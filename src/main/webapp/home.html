@@ -75,7 +75,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="index.html">
+                                    <a href="#" id="logout">
                                         <span class="glyphicon glyphicon-log-out" aria-hidden="true"></span>
                                         <span class="nav-label">Изход</span>
                                     </a>
@@ -186,6 +186,30 @@
 
     $(document).ready(function(){
     	
+    	var me;
+    	
+    	function getWhoAmI(){
+    		$.ajax({
+    			url : "/whoAmI",
+    			method : "GET",
+    			complete : function(data){ 	
+    				switch(data.status){
+    				case 200:
+    					me = data.responseJSON;
+    					break;
+    				case 401 :
+    					window.location.href="index.html";
+    					break;
+    				}  				
+    				    				
+    			},fail : function(){
+    				window.location.href="index.html";
+    			}
+    		});
+    		
+    	}
+    	
+    	
     	function getAllComments(){
     		$.ajax({
     			url: "/comment/all",
@@ -193,7 +217,7 @@
     			success : function(data){
     				data.forEach( function (comment){
     					postComment(comment.city, comment.comment, comment.temp,
-    							comment.icon, comment.id);
+    							comment.icon, comment.id, comment.user.id);
     				});    				
     				
     			},fail : function (){
@@ -272,7 +296,7 @@
         				alert(response);
         			}else{
         				postComment(cityToSend,$('#comment').val(), data.main.temp,
-        						data.weather[0].id.toString(), response);     				       				
+        						data.weather[0].id.toString(), response, response.user.id);     				       				
          			}      			
         			
         		},
@@ -284,7 +308,7 @@
         	
         }
         
-        function postComment(city, comment, temp, icon, id){
+        function postComment(city, comment, temp, icon, id, userID){
                 var miniMe = $('#cloneMe').clone();
 
                 miniMe.find('h4').text(city);
@@ -292,9 +316,16 @@
                 miniMe.attr('id', '');
                 miniMe.find('.current-temp').text(temp);
                 
-                miniMe.find('button').click(function(){
-                    deleteComment(miniMe, id);
-                });
+                console.log(me);
+                
+                if(me == userID){
+                    miniMe.find('button').click(function(){
+                        deleteComment(miniMe, id);
+                    });
+                }else{
+                	miniMe.find('button').hide();
+                }
+          
 
                 iconToChange = miniMe.find('img');
 
@@ -328,7 +359,12 @@
         				
         			case 404:
         				alert("You have to realise there is no comment!");
-        				break;        				
+        				break;  
+        				
+        			case 418:
+        				alert("Malicious intention detected! \n The police has been informed!!!");
+        				
+        				break;
         			}
         			
         			
@@ -377,6 +413,23 @@
             iconPlace.show();
         }
 
+		$('#logout').on('click', function(){
+			$.ajax({
+				url: "logout",
+				method: "POST",
+				complete : function(data){
+					if(data.status == 401){
+						alert("ERROR!");
+					}
+					
+					window.location.href = "index.html";
+					
+				}
+			})		
+			
+		});
+        
+		getWhoAmI();
         doApiRequest("plovdiv","main");
         getAllComments();
     });
